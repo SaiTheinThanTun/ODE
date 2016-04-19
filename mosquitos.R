@@ -42,19 +42,19 @@ ui <- fluidPage(
            ),
     column(4,
            h3("Initial Conditions"),
-           numericInput(inputId = "initPh",
+           numericInput(inputId = "H",
                         label = "Human Population: H",
                         value = 80
            ),
-           numericInput(inputId = "initIh",
+           numericInput(inputId = "X",
                         label = "Infected Human Population: X",
                         value = 30
            ),
-           numericInput(inputId = "initP",
+           numericInput(inputId = "M",
                         label = "Initial Mosquito Population: M",
                         value = 800
            ),
-           sliderInput(inputId = "initI",
+           sliderInput(inputId = "Z",
                        label = "Initial infected Mosquito Population: Z",
                        value = 200, min = 1, max=800
            ),
@@ -94,7 +94,7 @@ ui <- fluidPage(
            p("dX <- lam_h*Sh-(1/durinf)*X")
            #p("dRh <- (1/durinf)*X-(1/immunity)*Rh")
            
-           #textOutput(outputId = "lam")
+           #,textOutput(outputId = "lam")
     )
   )
   
@@ -108,18 +108,17 @@ server <- function(input, output) {
       #beta= #per capita effective contact with infected human per unit time
       #ce = (.3*.01), #probability of disease transmission per bite * biting rate
       a = input$a, #human blood feeding rate
+      b = input$beta_h, #probability of disease transmission per bite for human
       c = input$c, ##probability of disease transmission per bite for mosquitos
       #beta = input$beta, #probability of disease transmission per bite for mosquitos
-      b = input$beta_h, #probability of disease transmission per bite for human
       durinf = input$durinf * 2, #duration of infection in days * 2, because of 1/2 day time step
       immunity = input$immunity * 2 #duration of immunity * 2, because of 1/2 day time step
     )})
   
-  output$lam <- renderPrint({
-    #parameter <- parameters_r()
-    #lam <- parameter[3]*parameter[4]*(input$initIh/input$initPh)
-    #lam
-    print("xxx\n yyy")
+  lam_h <- reactive({
+    parameter <- parameters_r()
+    #lam_h <- m*a*b*z
+    lam_h <- (input$M/input$H)*parameter[3]*parameter[4]*(input$Z/input$M)
   })
   
   ode_out <- reactive({
@@ -130,8 +129,10 @@ server <- function(input, output) {
     parameters <- parameters_r()
     
     # MODEL INITIAL CONDITIONS
-    H <- input$initPh #total human population
-    X <- input$initIh #no of infected people, ideally this should be changing either from the IBM or the ODE model itself
+    H <- input$H
+    X <- input$X
+    #H <- input$initPh #total human population
+    #X <- input$initIh #no of infected people, ideally this should be changing either from the IBM or the ODE model itself
     #page 75 of A biologist's guide to mathematical modelling
     
     #
@@ -139,12 +140,12 @@ server <- function(input, output) {
     #initRh <- 0 #no of recovered individuals
     initSh <- H-X  #+initRh) #no of suscepitables
     
-    initP<- input$initP 
-    initI<-input$initI
-    initS<-initP-initI
+    M<- input$M 
+    Z<-input$Z
+    initS<-M-Z
     initD <- 0
     
-    state <- c(S = initS, Z = initI, Sh= initSh, X = X, Y=0)
+    state <- c(S = initS, Z = Z, Sh= initSh, X = X, Y=0)
     
     
     # set up a function to solve the model
@@ -213,8 +214,9 @@ server <- function(input, output) {
   
   output$human_pop <- renderPlot({
     out <- ode_out()
+    lam_h <- lam_h()
     par(mar=c(5,4,4,4))
-    plot(out[,1],out[,4], type="l", col="blue", axes=FALSE, xlab="", ylab="", main="human_pop")
+    plot(out[,1],out[,4], type="l", col="blue", axes=FALSE, xlab="", ylab="", main=paste("human_pop with lambda ",lam_h()))
     axis(2, ylim=c(0,17),col="blue") 
     mtext("Susceptible humans",side=2,line=2.5) 
     
