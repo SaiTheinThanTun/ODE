@@ -16,11 +16,11 @@ ui <- fluidPage(
            sliderInput(inputId = "durinf",
                        label = "duration of infection (days): durinf",
                        value = 30, min = 7, max = 365
-           ),
-           sliderInput(inputId = "immunity",
-                       label = "duration of immunity (days): immunity",
-                       value = 30, min = 7, max = 365
-           )
+           ) #, immunity is removed below
+           #sliderInput(inputId = "immunity",
+            #           label = "duration of immunity (days): immunity",
+            #           value = 30, min = 7, max = 365
+           #)
     ),
     column(4,
            sliderInput(inputId = "a",
@@ -85,14 +85,14 @@ ui <- fluidPage(
            p("lam_h <- m*a*b*z #FOI for humans"),
            br(),
            p("# rate of change for mosquitos"),
-           p("dS <- mui*P-muo*S-lam*S"),
+           p("dS <- mui*M-muo*S-lam*S"),
            p("dZ <- -muo*Z+lam*S"),
-           p("dD <- muo*S+muo*Z"),
+           #p("dD <- muo*S+muo*Z"),
            br(),
            p("# rate of change for humans"),
-           p("dSh <- -lam_h*Sh+(1/immunity)*Rh"),
-           p("dX <- lam_h*Sh-(1/durinf)*X"),
-           p("dRh <- (1/durinf)*X-(1/immunity)*Rh")
+           p("dSh <- -lam_h*Sh+(1/durinf)*X"),
+           p("dX <- lam_h*Sh-(1/durinf)*X")
+           #p("dRh <- (1/durinf)*X-(1/immunity)*Rh")
            
            #textOutput(outputId = "lam")
     )
@@ -133,15 +133,18 @@ server <- function(input, output) {
     H <- input$initPh #total human population
     X <- input$initIh #no of infected people, ideally this should be changing either from the IBM or the ODE model itself
     #page 75 of A biologist's guide to mathematical modelling
-    initRh <- 0 #no of recovered individuals
-    initSh <- H-(X+initRh) #no of suscepitables
+    
+    #
+    #
+    #initRh <- 0 #no of recovered individuals
+    initSh <- H-X  #+initRh) #no of suscepitables
     
     initP<- input$initP 
     initI<-input$initI
     initS<-initP-initI
     initD <- 0
     
-    state <- c(S = initS, Z = initI, D = initD, P = initP, Sh= initSh, X = X, Rh= initRh, Y=0)
+    state <- c(S = initS, Z = initI, Sh= initSh, X = X, Y=0)
     
     
     # set up a function to solve the model
@@ -152,7 +155,7 @@ server <- function(input, output) {
              
              # define variables
              M <- (S+Z)
-             H <- (Sh+X+Rh)
+             H <- (Sh+X)
              m <- M/H #ratio of mosquitos to humans
              z <- Z/M #ratio of infectious mosquitos
              x <- X/H #ratio of infectious humans
@@ -163,19 +166,19 @@ server <- function(input, output) {
              lam_h <- m*a*b*z
              
              # rate of change for mosquitos
-             dS <- mui*P-muo*S-lam*S
+             dS <- mui*M-muo*S-lam*S
              dZ <- -muo*Z+lam*S
-             dD <- muo*S+muo*Z #remove this!!!!
-             dP <- 0
+             #dD <- muo*S+muo*Z #remove this!!!!
+             #dM <- 0
              
              # rate of change for humans
-             dSh <- -lam_h*Sh+(1/immunity)*Rh
+             dSh <- -lam_h*Sh+(1/durinf)*X
              dX <- lam_h*Sh-(1/durinf)*X
-             dRh <- (1/durinf)*X-(1/immunity)*Rh
+             #dRh <- (1/durinf)*X-(1/immunity)*Rh
              dY <- 1
              
              # return the rate of change
-             list(c(dS, dZ, dD,dP, dSh, dX, dRh, dY))
+             list(c(dS, dZ, dSh, dX, dY))
            }
       ) 
       
@@ -211,13 +214,13 @@ server <- function(input, output) {
   output$human_pop <- renderPlot({
     out <- ode_out()
     par(mar=c(5,4,4,4))
-    plot(out[,1],out[,6], type="l", col="blue", axes=FALSE, xlab="", ylab="", main="human_pop")
+    plot(out[,1],out[,4], type="l", col="blue", axes=FALSE, xlab="", ylab="", main="human_pop")
     axis(2, ylim=c(0,17),col="blue") 
     mtext("Susceptible humans",side=2,line=2.5) 
     
     box()
     par(new=TRUE)
-    plot(out[,1],out[,7], type="l", col="red", axes=FALSE, xlab="", ylab="")
+    plot(out[,1],out[,5], type="l", col="red", axes=FALSE, xlab="", ylab="")
     axis(4, ylim=c(0,17),col="red") 
     mtext("Infected humans",side=4, line=2.5)
     
