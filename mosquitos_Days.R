@@ -93,7 +93,7 @@ ui <- fluidPage(
            p("dSh <- -lam_h*Sh+(1/durinf)*X"),
            p("dX <- lam_h*Sh-(1/durinf)*X")
            #p("dRh <- (1/durinf)*X-(1/immunity)*Rh")
-           
+           , downloadButton('downloadODE','Download')
            #,textOutput(outputId = "lam")
     )
   )
@@ -190,7 +190,13 @@ server <- function(input, output) {
     #out[,]
   })
   
-  
+  output$downloadODE <- downloadHandler(
+    #out <- ode_out()
+    filename= function(){paste('summary_ode_',Sys.Date(),'.csv',sep='')},
+    content= function(file){
+      write.csv(ode_out(),file)
+    }
+  )
   
   output$everything_mosq <- renderPlot({
     out <- ode_out()
