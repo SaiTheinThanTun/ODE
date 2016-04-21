@@ -93,7 +93,7 @@ ui <- fluidPage(
            p("dSh <- -lam_h*Sh+(1/durinf)*X"),
            p("dX <- lam_h*Sh-(1/durinf)*X")
            #p("dRh <- (1/durinf)*X-(1/immunity)*Rh")
-           , downloadButton('downloadODE','Download')
+           , downloadButton('downloadODE','Download (works only in browser)')
            #,textOutput(outputId = "lam")
     )
   )
@@ -145,7 +145,11 @@ server <- function(input, output) {
     initS<-M-Z
     initD <- 0
     
-    state <- c(S = initS, Z = Z, Sh= initSh, X = X, Y=0)
+    ##
+    lam_h <- 0
+    lam <- 0
+    
+    state <- c(Sh= initSh, X = X, lam_h = lam_h, S = initS, Z = Z, lam=lam,Y=0)
     
     
     # set up a function to solve the model
@@ -179,7 +183,7 @@ server <- function(input, output) {
              dY <- 1
              
              # return the rate of change
-             list(c(dS, dZ, dSh, dX, dY))
+             list(c(dSh, dX,lam_h, dS, dZ, lam, dY))
            }
       ) 
       
@@ -202,12 +206,12 @@ server <- function(input, output) {
     out <- ode_out()
     par(mar=c(5,4,4,4)) #default is par(mar=c(5,4,4,2))
     
-    plot(out[,1],out[,2], type="l", col="blue", axes=FALSE, xlab="", ylab="", main="mosq_pop")
+    plot(out[,1],out[,5], type="l", col="blue", axes=FALSE, xlab="", ylab="", main="mosq_pop")
     axis(2, ylim=c(0,17),col="blue") 
     mtext("Susceptible mosquitoes",side=2,line=2.5) 
     box()
     par(new=TRUE)
-    plot(out[,1],out[,3], type="l", col="red", axes=FALSE, xlab="", ylab="")
+    plot(out[,1],out[,6], type="l", col="red", axes=FALSE, xlab="", ylab="")
     axis(4, ylim=c(0,17),col="red") 
     mtext("Infected mosquitoes",side=4,line=2.5)
     
@@ -222,13 +226,13 @@ server <- function(input, output) {
     out <- ode_out()
     lam_h <- lam_h()
     par(mar=c(5,4,4,4))
-    plot(out[,1],out[,4], type="l", col="blue", axes=FALSE, xlab="", ylab="", main=paste("human_pop with lambda ",lam_h()))
+    plot(out[,1],out[,2], type="l", col="blue", axes=FALSE, xlab="", ylab="", main=paste("human_pop with lambda ",lam_h()))
     axis(2, ylim=c(0,17),col="blue") 
     mtext("Susceptible humans",side=2,line=2.5) 
     
     box()
     par(new=TRUE)
-    plot(out[,1],out[,5], type="l", col="red", axes=FALSE, xlab="", ylab="")
+    plot(out[,1],out[,3], type="l", col="red", axes=FALSE, xlab="", ylab="")
     axis(4, ylim=c(0,17),col="red") 
     mtext("Infected humans",side=4, line=2.5)
     
