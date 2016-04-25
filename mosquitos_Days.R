@@ -7,11 +7,11 @@ ui <- fluidPage(
            h3("Transmission parameters"),
            sliderInput(inputId = "mui",
                        label = "birth rate of mosquitos",
-                       value = .05, min = .001, max = .1 #10 days survival= 20 half-days survival, therefore 1/20=.05
+                       value = .05, min = 0, max = .1 #10 days survival= 20 half-days survival, therefore 1/20=.05
            ),
            sliderInput(inputId = "muo",
                        label = "death rate of mosquitos",
-                       value = .05, min = .001, max = .1
+                       value = .05, min = 0, max = .1
            ),
            sliderInput(inputId = "durinf",
                        label = "duration of infection (days): durinf",
