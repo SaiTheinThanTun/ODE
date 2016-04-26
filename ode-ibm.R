@@ -1,5 +1,11 @@
 library(deSolve)
 library(shiny)
+library(ggplot2)
+
+#required data
+age_prob_0to97 <- read.csv("C:/wd/0to97_age_prob.csv", header=FALSE)
+male_prob_0to97 <- read.csv("C:/wd/0to97_male_prob.csv", header=FALSE)
+age <- 0:97
 
 ui <- fluidPage(
   fluidRow(
@@ -21,6 +27,9 @@ ui <- fluidPage(
             #           label = "duration of immunity (days): immunity",
             #           value = 30, min = 7, max = 365
            #)
+           ,numericInput(inputId = "no_sims",
+                         label = "number of simulations",
+                         value = 10)
     ),
     column(4,
            sliderInput(inputId = "a",
@@ -106,7 +115,7 @@ fluidRow(h2("IBM"),
                 #,plotOutput(outputId = "everything_mosq")
          ),
          column(2,h3("Download csv")
-                #,downloadButton('downloadODE','Download (works only in browser)')
+                ,downloadButton('downloadIBM','Download (works only in browser)')
                 ))
   
   
@@ -253,6 +262,210 @@ server <- function(input, output) {
     legend("top",legend=c("Susceptibles","Infected"),
            text.col=c("blue","red"),pch= "__", col=c("blue","red"))
   })
+  #ibm outputs
+  
+  ibm_sims <- reactive({
+    ####parameters####
+    durinf <- 7 #duration of infection
+    a <- .1 #human blood feeding rate
+    b <- .3 #probability of disease transmission per bite for human
+    c <- .7 #probability a mosquito becomes infected after biting an infected human
+    muo <- .05 ##10 days survival= 20 half-days survival, therefore 1/20=.05
+    moi <- .05
+    
+    H <- 80 #human population
+    X <- 30 #infected humans
+    M <- 800 #initial mosquito population
+    Z <- 200 #initial infected mosquitos
+    timesteps_days <- 28
+    timesteps <- timesteps_days*2 #365*2 
+    no_sims <- 10 #no. of simulations
+    
+    lci <- .05 #lowest confidence interval
+    hci <- .95  #highest confidence interval
+    
+    #this also needs to be changed during the subsequent timesteps
+    m <- M/H
+    z <- Z/M
+    x <- X/H #ratio of infectious humans
+    
+    lam_h <- m*a*b*z #lam_h <- 0.075 #lambda for humans
+    lam <- a*c*x #lambda for mosquitos
+    
+    
+    ####synthesizing age and gender####
+    sim_age <- sample(age, H, replace=TRUE,prob=age_prob_0to97[,1])
+    #hist(sim_age) 
+    gender <- rep(NA,length(sim_age))
+    
+    for(i in 1:length(sim_age)){
+      p <- male_prob_0to97[sim_age[i]+1,1] #male_prob is already arranged in ascending age
+      gender[i] <- sample(2,1,prob=c(p,1-p))
+    }
+    
+    ####testing the proportions####
+    #tmp <- cbind(sim_age,gender)
+    #tmp <- as.data.frame(tmp)
+    #colnames(tmp) <- c('s_age','s_gender')
+    #tmp$s_gender <- as.factor(tmp$s_gender)
+    #qplot(s_age, data=tmp,fill=s_gender)
+    
+    ####synthesizing infected population####
+    infected_h <- rep(NA,H)
+    for(i in 1:H){
+      infected_h[i] <- sample(c(0,1),1, prob=c(.8,.2))
+    }
+    
+    tts <- rep(0, H) #time to become susceptable, 1/dur_inf in normal distribution
+    
+    random_no <- runif(H) # random uniform no. to decide the prob. of being infected if susceptable
+    current <- rep(1, H) #infected in current timestep
+    
+    df <- cbind(sim_age,gender,infected_h, tts, random_no, current) #variable addition for populated dataframe
+    
+    ####codebook for df####
+    #1. sim_age
+    #2. gender
+    #3. infected_h
+    #4. tts #time to become susceptible again
+    #5. random_n #random no. drawn from uniform distribution
+    #6. current #a switch to detect if an individual is infected in current timestep or not
+    
+    
+    ###initializing####
+    for(i in 1:nrow(df)){
+      if(df[i,3] && df[i,6]){ #if infected #at current timestep 
+        
+        
+        df[i,4] <- rnorm(1,mean=1,sd=.2) * durinf #input into tts, time to susceptable
+        
+        
+      }
+      
+      df[i,4] <- df[i,4]-.5 #tts-.5 per timestep
+      df[i,6] <- 0 # resetting 'infected at current timestep'
+    }
+    
+    #first row of the summary table
+    #time 0
+    X <- sum(df[,3]) #no. of infected humans
+    x <- X/H #ratio of infectious humans
+    #rate of change of Z from ODE
+    lam <- a*c*x
+    ###need to check this####
+    #Z <- Z+lam*(M-Z) 
+    
+    #m <- M/H ###no. of mosquitos doesn't change FOR NOW
+    z <- Z/M
+    lam_h <- m*a*b*z
+    
+    time0 <- c(0, H-X, X, lam_h, M-Z, Z, lam) #variable addition for simulation table
+    
+    #######write an initialized file#####
+    #write.csv(df, file='0.csv')
+    
+    
+    #######Simulate Summary table function#####
+    simulate_summ <- function(){#function for subsequent timesteps
+      
+      summ_tab <- matrix(NA, nrow=timesteps+1, ncol=7) # summary table for plotting, +1 because it starts from 0 #variable addition for simulation table
+      colnames(summ_tab) <- c('timesteps','susceptables','infected', 'lam_h','S','Z','lam') #column names for the summary table
+      #variable addition for simulation table
+      summ_tab[1,] <- time0 #the first line of the table. the states at time0
+      
+      #there's an error which one to take as time 0 (or 0.5)
+      summ_tab[,1] <- seq(0,timesteps_days,by=(1/2))
+      
+      for(j in 1:timesteps+1){ #this means 2:(timesteps+1)
+        
+        for(i in 1:nrow(df)){
+          if(df[i,5]<=lam_h){ #if uniform random no. drawn for individual is <= prob of infected
+            df[i,3] <- df[i,6] <- 1 #denoting this person is infected on this timestep
+          }
+          
+          if(df[i,3]==1 && df[i,6]==1){ #if infected #at current timestep 
+            
+            df[i,4] <- rnorm(1,mean=1,sd=.2) * durinf #input into tts, time to become susceptable again
+            
+          }
+          
+          df[i,4] <- df[i,4]-.5 #tts-.5 per timestep
+          
+          if(df[i,4]<=0 && df[i,3]==1){ #currently infected, but durinf is over
+            df[i,3] <- 0 #then he becomes suscepitable again
+          }
+          
+          #resetting for the next round
+          df[i,5] <- runif(1) #drawing random no. for each individual
+          df[i,6] <- 0 # resetting 'infected at current timestep'
+        }
+        #at the end of big for loop
+        #calculate summary variables and lam_h for the next timestep
+        X <- sum(df[,3]) #no. of infected humans
+        x <- X/H #ratio of infectious humans
+        #rate of change of Z from ODE
+        lam <- a*c*x #1-(1-(a*c))^x #a*c*x
+        S_prev <- (M-Z)
+        S <- S_prev+M*mui-muo*S_prev-lam*S_prev
+        Z <- Z+lam*S_prev-muo*Z
+        
+        M <- S+Z #recalculating mosquito population
+        #m <- M/H ###no. of mosquitos doesn't change FOR NOW
+        z <- Z/M
+        lam_h <- m*a*b*z #1-(1-(a*b*m))^z #m*a*b*z
+        
+        #writing a summary table
+        #summ_tab[j,1] <- j
+        summ_tab[j,2] <- H-X
+        summ_tab[j,3] <- X
+        summ_tab[j,4] <-lam_h
+        summ_tab[j,5] <- S #############################
+        summ_tab[j,6] <- Z #need to have some limitation on Z, infected mosquitos
+        summ_tab[j,7] <- lam
+        
+        ######outputing csv of the simulation on each timestep#######
+        #if(j<10 | j>(max(timesteps)-10)){
+        #  write.csv(df, file=paste(j,".csv",sep=""))
+        #}
+      }
+      summ_tab
+    }
+    ####plotting multiple simulation####
+    
+    
+    #creating a list of simulations
+    sims <- list()
+    for(i in 1:no_sims){
+      sims[[i]] <- simulate_summ()
+    }
+    sims
+  })
+  ibm_avg_out <- reactive({
+    #averaging across the list
+    
+    #fetching variables
+    sims <- ibm_sims()
+    no_sims <- input$no_sims
+    
+    tmp_avg <- rep(NA,no_sims)
+    avg_sims <- matrix(NA,nrow(sims[[1]]),ncol(sims[[1]])) #initializing a blank dataset of summary table
+    for(i in 1:ncol(sims[[1]])){ #outer loop for the columns
+      for(j in 1:nrow(sims[[1]])){ #inner loop for the rows
+        for(k in 1:no_sims){#innermost loop for no. of simulations(3rd dimension)
+          tmp_avg[k] <- sims[[k]][j,i]
+        }
+        avg_sims[j,i] <- mean(tmp_avg)
+      }
+    }
+    colnames(avg_sims) <- c('timesteps','susceptables','infected', 'lam_h','S','Z','lam') #column names for the summary table #variable addition
+    avg_sims
+  })
+  
+  output$downloadIBM <- downloadHandler(
+    filename= function(){paste('ibm_avg_',Sys.Date(),'.csv',sep='')},
+    content= function(file){
+      write.csv(ibm_avg_out(),file)
+    })
 }
 
 shinyApp(ui = ui, server = server)
