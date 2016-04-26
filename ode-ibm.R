@@ -281,7 +281,7 @@ server <- function(input, output) {
     b <- parameters[4] #.3 #probability of disease transmission per bite for human
     c <- parameters[5] #.7 #probability a mosquito becomes infected after biting an infected human
     muo <- parameters[2] #.05 ##10 days survival= 20 half-days survival, therefore 1/20=.05
-    moi <- parameters[1] #.05
+    mui <- parameters[1] #.05
     
     H <- input$H #80 #human population
     X <- input$X # 30 #infected humans
