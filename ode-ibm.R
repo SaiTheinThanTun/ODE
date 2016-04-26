@@ -1,6 +1,6 @@
 library(deSolve)
 library(shiny)
-library(ggplot2)
+#library(ggplot2)
 
 #required data
 age_prob_0to97 <- read.csv("C:/wd/0to97_age_prob.csv", header=FALSE)
@@ -29,7 +29,15 @@ ui <- fluidPage(
            #)
            ,numericInput(inputId = "no_sims",
                          label = "number of simulations",
-                         value = 10)
+                         value = 10),
+           sliderInput(inputId = "lci",
+                       label = "lower bound of CI : lci",
+                       value = .05, min = 0, max = 1
+           ),
+           sliderInput(inputId = "hci",
+                       label = "higher bound of CI : hci",
+                       value = .95, min = 0, max = 1
+           )
     ),
     column(4,
            sliderInput(inputId = "a",
@@ -108,7 +116,7 @@ ui <- fluidPage(
   ),
 fluidRow(h2("IBM"),
          column(5,h3("Human population")
-                #,plotOutput(outputId="human_pop")
+                ,plotOutput(outputId="ibm_sims_plot")
          ),
          column(5,
                 h3("Mosquito Population")
@@ -131,7 +139,7 @@ server <- function(input, output) {
       b = input$beta_h, #probability of disease transmission per bite for human
       c = input$c, ##probability of disease transmission per bite for mosquitos
       #beta = input$beta, #probability of disease transmission per bite for mosquitos
-      durinf = input$durinf * 2, #duration of infection in days * 2, because of 1/2 day time step
+      durinf = input$durinf, #duration of infection in days * 2, because of 1/2 day time step
       immunity = input$immunity * 2 #duration of immunity * 2, because of 1/2 day time step
     )})
   
@@ -197,8 +205,8 @@ server <- function(input, output) {
              #dM <- 0
              
              # rate of change for humans
-             dSh <- -lam_h*Sh+(1/durinf)*X
-             dX <- lam_h*Sh-(1/durinf)*X
+             dSh <- -lam_h*Sh+(1/(durinf*2))*X #durinf*2 because input was in days and ODE was in .5 days
+             dX <- lam_h*Sh-(1/(durinf*2))*X  #durinf*2 because input was in days and ODE was in .5 days
              #dRh <- (1/durinf)*X-(1/immunity)*Rh
              dY <- 1
              
@@ -266,23 +274,26 @@ server <- function(input, output) {
   
   ibm_sims <- reactive({
     ####parameters####
-    durinf <- 7 #duration of infection
-    a <- .1 #human blood feeding rate
-    b <- .3 #probability of disease transmission per bite for human
-    c <- .7 #probability a mosquito becomes infected after biting an infected human
-    muo <- .05 ##10 days survival= 20 half-days survival, therefore 1/20=.05
-    moi <- .05
+    parameters <- parameters_r()
     
-    H <- 80 #human population
-    X <- 30 #infected humans
-    M <- 800 #initial mosquito population
-    Z <- 200 #initial infected mosquitos
-    timesteps_days <- 28
+    durinf <- parameters[6] #7 #duration of infection #readjustment may have been done to correct for the IBM calculation
+    a <- parameters[3] #.1 #human blood feeding rate
+    b <- parameters[4] #.3 #probability of disease transmission per bite for human
+    c <- parameters[5] #.7 #probability a mosquito becomes infected after biting an infected human
+    muo <- parameters[2] #.05 ##10 days survival= 20 half-days survival, therefore 1/20=.05
+    moi <- parameters[1] #.05
+    
+    H <- input$H #80 #human population
+    X <- input$X # 30 #infected humans
+    M <- input$M #800 #initial mosquito population
+    Z <- input$Z #200 #initial infected mosquitos
+    timesteps_days <- input$days #28
     timesteps <- timesteps_days*2 #365*2 
-    no_sims <- 10 #no. of simulations
+    no_sims <- input$no_sims #10 #no. of simulations
     
-    lci <- .05 #lowest confidence interval
-    hci <- .95  #highest confidence interval
+    #switch the following 2 CIs in the next reactive/renderplot function
+    #lci <- .05 #lowest confidence interval
+    #hci <- .95  #highest confidence interval
     
     #this also needs to be changed during the subsequent timesteps
     m <- M/H
@@ -312,8 +323,10 @@ server <- function(input, output) {
     
     ####synthesizing infected population####
     infected_h <- rep(NA,H)
+    S_prob <- (H-X)/H
+    I_prob <- X/H
     for(i in 1:H){
-      infected_h[i] <- sample(c(0,1),1, prob=c(.8,.2))
+      infected_h[i] <- sample(c(0,1),1, prob=c(S_prob,I_prob))
     }
     
     tts <- rep(0, H) #time to become susceptable, 1/dur_inf in normal distribution
@@ -404,7 +417,7 @@ server <- function(input, output) {
         X <- sum(df[,3]) #no. of infected humans
         x <- X/H #ratio of infectious humans
         #rate of change of Z from ODE
-        lam <- a*c*x #1-(1-(a*c))^x #a*c*x
+        lam <- a*c*x #1-(1-(a*c))^x #a*c*x  ###Reed-Frost
         S_prev <- (M-Z)
         S <- S_prev+M*mui-muo*S_prev-lam*S_prev
         Z <- Z+lam*S_prev-muo*Z
@@ -412,7 +425,7 @@ server <- function(input, output) {
         M <- S+Z #recalculating mosquito population
         #m <- M/H ###no. of mosquitos doesn't change FOR NOW
         z <- Z/M
-        lam_h <- m*a*b*z #1-(1-(a*b*m))^z #m*a*b*z
+        lam_h <- m*a*b*z #1-(1-(a*b*m))^z #m*a*b*z ###Reed-Frost
         
         #writing a summary table
         #summ_tab[j,1] <- j
@@ -466,6 +479,69 @@ server <- function(input, output) {
     content= function(file){
       write.csv(ibm_avg_out(),file)
     })
+  
+  output$ibm_sims_plot <- renderPlot({
+    #fetching variables
+    sims <- ibm_sims()
+    no_sims <- input$no_sims
+    
+    #averaging across the list
+    tmp_avg <- rep(NA,no_sims)
+    avg_sims <- matrix(NA,nrow(sims[[1]]),ncol(sims[[1]])) #initializing a blank dataset of summary table
+    for(i in 1:ncol(sims[[1]])){ #outer loop for the columns
+      for(j in 1:nrow(sims[[1]])){ #inner loop for the rows
+        for(k in 1:no_sims){#innermost loop for no. of simulations(3rd dimension)
+          tmp_avg[k] <- sims[[k]][j,i]
+        }
+        avg_sims[j,i] <- mean(tmp_avg)
+      }
+    }
+    
+    #lower CI (LCI)
+    tmp_lci <- rep(NA,no_sims)
+    lci_sims <- matrix(NA,nrow(sims[[1]]),ncol(sims[[1]])) #initializing a blank dataset of summary table
+    for(i in 1:ncol(sims[[1]])){ #outer loop for the columns
+      for(j in 1:nrow(sims[[1]])){ #inner loop for the rows
+        for(k in 1:no_sims){#innermost loop for no. of simulations(3rd dimension)
+          tmp_lci[k] <- sims[[k]][j,i]
+        }
+        lci_sims[j,i] <- quantile(tmp_lci, probs= input$lci, na.rm=TRUE)
+      }
+    }
+    
+    #high CI (HCI)
+    tmp_hci <- rep(NA,no_sims)
+    hci_sims <- matrix(NA,nrow(sims[[1]]),ncol(sims[[1]])) #initializing a blank dataset of summary table
+    for(i in 1:ncol(sims[[1]])){ #outer loop for the columns
+      for(j in 1:nrow(sims[[1]])){ #inner loop for the rows
+        for(k in 1:no_sims){#innermost loop for no. of simulations(3rd dimension)
+          tmp_hci[k] <- sims[[k]][j,i]
+        }
+        hci_sims[j,i] <- quantile(tmp_hci, probs = input$hci, na.rm=TRUE)
+      }
+    }
+    
+    colnames(avg_sims) <- colnames(hci_sims) <- colnames(lci_sims) <- c('timesteps','susceptables','infected', 'lam_h','S','Z','lam') #column names for the summary table
+    
+    par(mar=c(5,4,4,4))
+    plot(avg_sims[,1],avg_sims[,2], type="l", col="blue", axes=FALSE, xlab="", ylab="", main=paste("human_pop with"))# lambda",lam_h,"and CI",lci,'-',hci))
+    polygon(c(avg_sims[,1], rev(avg_sims[,1])), c(hci_sims[,2], rev(lci_sims[,2])),col=rgb(0,0,100,50,maxColorValue=255), border=NA)
+    axis(2, ylim=c(0,17),col="blue") 
+    mtext("Susceptible humans",side=2,line=2.5) 
+    
+    box()
+    par(new=TRUE)
+    plot(avg_sims[,1],avg_sims[,3], type="l", col="red", axes=FALSE, xlab="", ylab="")
+    polygon(c(avg_sims[,1], rev(avg_sims[,1])), c(hci_sims[,3], rev(lci_sims[,3])),col=rgb(100,0,0,50,maxColorValue = 255), border=NA)
+    axis(4, ylim=c(0,17),col="red") 
+    mtext("Infected humans",side=4, line=2.5)
+    
+    axis(1,pretty(range(avg_sims[,1]),10))
+    mtext("Time (0.5 days)",side=1,col="black",line=2.5)
+    
+    legend("top",legend=c("Susceptibles","Infected"),
+           text.col=c("blue","red"),pch= "__", col=c("blue","red"))
+  })
 }
 
 shinyApp(ui = ui, server = server)
