@@ -120,7 +120,7 @@ fluidRow(h2("IBM"),
          ),
          column(5,
                 h3("Mosquito Population")
-                #,plotOutput(outputId = "everything_mosq")
+                ,plotOutput(outputId = "ibm_sims_plot_mosq")
          ),
          column(2,h3("Download csv")
                 ,downloadButton('downloadIBM','Download (works only in browser)')
@@ -545,7 +545,71 @@ server <- function(input, output) {
     mtext("Infected humans",side=4, line=2.5)
     
     axis(1,pretty(range(avg_sims[,1]),10))
-    mtext("Time (0.5 days)",side=1,col="black",line=2.5)
+    mtext("Time (days)",side=1,col="black",line=2.5)
+    
+    legend("top",legend=c("Susceptibles","Infected"),
+           text.col=c("blue","red"),pch= "__", col=c("blue","red"))
+  })
+  
+  #doing the following way, it is not optimized!!!!
+  output$ibm_sims_plot_mosq <- renderPlot({
+    #fetching variables
+    sims <- ibm_sims()
+    no_sims <- input$no_sims
+    
+    #averaging across the list
+    tmp_avg <- rep(NA,no_sims)
+    avg_sims <- matrix(NA,nrow(sims[[1]]),ncol(sims[[1]])) #initializing a blank dataset of summary table
+    for(i in 1:ncol(sims[[1]])){ #outer loop for the columns
+      for(j in 1:nrow(sims[[1]])){ #inner loop for the rows
+        for(k in 1:no_sims){#innermost loop for no. of simulations(3rd dimension)
+          tmp_avg[k] <- sims[[k]][j,i]
+        }
+        avg_sims[j,i] <- mean(tmp_avg)
+      }
+    }
+    
+    #lower CI (LCI)
+    tmp_lci <- rep(NA,no_sims)
+    lci_sims <- matrix(NA,nrow(sims[[1]]),ncol(sims[[1]])) #initializing a blank dataset of summary table
+    for(i in 1:ncol(sims[[1]])){ #outer loop for the columns
+      for(j in 1:nrow(sims[[1]])){ #inner loop for the rows
+        for(k in 1:no_sims){#innermost loop for no. of simulations(3rd dimension)
+          tmp_lci[k] <- sims[[k]][j,i]
+        }
+        lci_sims[j,i] <- quantile(tmp_lci, probs= input$lci, na.rm=TRUE)
+      }
+    }
+    
+    #high CI (HCI)
+    tmp_hci <- rep(NA,no_sims)
+    hci_sims <- matrix(NA,nrow(sims[[1]]),ncol(sims[[1]])) #initializing a blank dataset of summary table
+    for(i in 1:ncol(sims[[1]])){ #outer loop for the columns
+      for(j in 1:nrow(sims[[1]])){ #inner loop for the rows
+        for(k in 1:no_sims){#innermost loop for no. of simulations(3rd dimension)
+          tmp_hci[k] <- sims[[k]][j,i]
+        }
+        hci_sims[j,i] <- quantile(tmp_hci, probs = input$hci, na.rm=TRUE)
+      }
+    }
+    
+    colnames(avg_sims) <- colnames(hci_sims) <- colnames(lci_sims) <- c('timesteps','susceptables','infected', 'lam_h','S','Z','lam') #column names for the summary table
+    #mosquitos
+    par(mar=c(5,4,4,4))
+    plot(avg_sims[,1],avg_sims[,5], type="l", col="blue", axes=FALSE, xlab="", ylab="", main=paste("mosquito_pop")) # with lambda",lam_h,"and CI",lci,'-',hci))
+    polygon(c(avg_sims[,1], rev(avg_sims[,1])), c(hci_sims[,5], rev(lci_sims[,5])),col=rgb(0,0,100,50,maxColorValue=255), border=NA)
+    axis(2, ylim=c(0,17),col="blue") 
+    mtext("Susceptible mosquitos",side=2,line=2.5) 
+    
+    box()
+    par(new=TRUE)
+    plot(avg_sims[,1],avg_sims[,6], type="l", col="red", axes=FALSE, xlab="", ylab="")
+    polygon(c(avg_sims[,1], rev(avg_sims[,1])), c(hci_sims[,6], rev(lci_sims[,6])),col=rgb(100,0,0,50,maxColorValue = 255), border=NA)
+    axis(4, ylim=c(0,17),col="red") 
+    mtext("Infected mosquitos",side=4, line=2.5)
+    
+    axis(1,pretty(range(avg_sims[,1]),10))
+    mtext("Time (days)",side=1,col="black",line=2.5)
     
     legend("top",legend=c("Susceptibles","Infected"),
            text.col=c("blue","red"),pch= "__", col=c("blue","red"))
