@@ -364,18 +364,26 @@ server <- function(input, output) {
     X <- sum(df[,3]) #no. of infected humans
     x <- X/H #ratio of infectious humans
     #rate of change of Z from ODE
-    lam <- a*c*x
+    lam <- a*c*x #1-(1-(a*c))^x #a*c*x ###Reed-Frost
+    S_prev <- (M-Z)
+    Z_prev <- Z #only in this first step, on later steps in the function, it was not recorded
+    M_prev <- M
+    S <- S_prev+M_prev*mui-muo*S_prev-lam*S_prev
+    Z <- Z_prev+lam*S_prev-muo*Z_prev
+    
+    M <- S+Z #recalculating mosquito population
     ###need to check this####
-    #Z <- Z+lam*(M-Z) 
     
     #m <- M/H ###no. of mosquitos doesn't change FOR NOW
     z <- Z/M
     lam_h <- m*a*b*z
     
-    time0 <- c(0, H-X, X, lam_h, M-Z, Z, lam) #variable addition for simulation table
+    time0 <- c(0, H-X, X, lam_h, S_prev, Z_prev, lam) #variable addition for simulation table
+    ##above, lam_h and lam values are for the next time step
     
-    #######write an initialized file#####
+    #######outputting csv: write an initialized file#####
     #write.csv(df, file='0.csv')
+    
     
     
     #######Simulate Summary table function#####
@@ -417,7 +425,7 @@ server <- function(input, output) {
         X <- sum(df[,3]) #no. of infected humans
         x <- X/H #ratio of infectious humans
         #rate of change of Z from ODE
-        lam <- a*c*x #1-(1-(a*c))^x #a*c*x  ###Reed-Frost
+        lam <- a*c*x*.5 #1-(1-(a*c))^x #a*c*x  ###Reed-Frost
         S_prev <- (M-Z)
         S <- S_prev+M*mui-muo*S_prev-lam*S_prev
         Z <- Z+lam*S_prev-muo*Z
@@ -425,7 +433,7 @@ server <- function(input, output) {
         M <- S+Z #recalculating mosquito population
         #m <- M/H ###no. of mosquitos doesn't change FOR NOW
         z <- Z/M
-        lam_h <- m*a*b*z #1-(1-(a*b*m))^z #m*a*b*z ###Reed-Frost
+        lam_h <- m*a*b*z*.5 #1-(1-(a*b*m))^z #m*a*b*z ###Reed-Frost
         
         #writing a summary table
         #summ_tab[j,1] <- j
