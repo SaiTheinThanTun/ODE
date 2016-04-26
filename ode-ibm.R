@@ -400,7 +400,7 @@ server <- function(input, output) {
       for(j in 1:timesteps+1){ #this means 2:(timesteps+1)
         
         for(i in 1:nrow(df)){
-          if(df[i,5]<=lam_h){ #if uniform random no. drawn for individual is <= prob of infected
+          if(df[i,3]==0 & df[i,5]<=lam_h){ #if uniform random no. drawn for 'uninfected' individual is <= prob of getting infected
             df[i,3] <- df[i,6] <- 1 #denoting this person is infected on this timestep
           }
           
@@ -413,7 +413,7 @@ server <- function(input, output) {
           df[i,4] <- df[i,4]-.5 #tts-.5 per timestep
           
           if(df[i,4]<=0 && df[i,3]==1){ #currently infected, but durinf is over
-            df[i,3] <- 0 #then he becomes suscepitable again
+            df[i,3] <- 0 #then he becomes suscepitable again on the next timestep
           }
           
           #resetting for the next round
@@ -425,7 +425,7 @@ server <- function(input, output) {
         X <- sum(df[,3]) #no. of infected humans
         x <- X/H #ratio of infectious humans
         #rate of change of Z from ODE
-        lam <- a*c*x*.5 #1-(1-(a*c))^x #a*c*x  ###Reed-Frost
+        lam <- a*c*x #1-(1-(a*c))^x #a*c*x ###Reed-Frost
         S_prev <- (M-Z)
         S <- S_prev+M*mui-muo*S_prev-lam*S_prev
         Z <- Z+lam*S_prev-muo*Z
@@ -433,7 +433,7 @@ server <- function(input, output) {
         M <- S+Z #recalculating mosquito population
         #m <- M/H ###no. of mosquitos doesn't change FOR NOW
         z <- Z/M
-        lam_h <- m*a*b*z*.5 #1-(1-(a*b*m))^z #m*a*b*z ###Reed-Frost
+        lam_h <- m*a*b*z #1-(1-(a*b*m))^z #m*a*b*z  ###Reed-Frost
         
         #writing a summary table
         #summ_tab[j,1] <- j
@@ -444,10 +444,10 @@ server <- function(input, output) {
         summ_tab[j,6] <- Z #need to have some limitation on Z, infected mosquitos
         summ_tab[j,7] <- lam
         
-        ######outputing csv of the simulation on each timestep#######
-        #if(j<10 | j>(max(timesteps)-10)){
-        #  write.csv(df, file=paste(j,".csv",sep=""))
-        #}
+        ######outputting csv of the simulation on each timestep#######
+#         if(j<20 | j>(max(timesteps)-10)){
+#           write.csv(df, file=paste(j-1,".csv",sep=""))
+#         }
       }
       summ_tab
     }
