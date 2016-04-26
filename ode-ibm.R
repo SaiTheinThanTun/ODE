@@ -64,7 +64,7 @@ ui <- fluidPage(
            )
     )
   ),
-  fluidRow(
+  fluidRow(h2("ODE"),
     #column(5,
     #       h3("plot of inc2"),
     #       plotOutput(outputId = "inc2")
@@ -77,26 +77,37 @@ ui <- fluidPage(
            h3("Mosquito Population"),
            plotOutput(outputId = "everything_mosq")
     ),
-    column(6,h3("Equations"),
-           p("m <- M/H #ratio of mosquitos to humans"),
-           p("z <- Z/M #ratio of infectious mosquitos"),
-           p("x <- X/H #ratio of infectious humans"),
-           p("lam <- a*c*x #FOI for mosquitos"),
-           p("lam_h <- m*a*b*z #FOI for humans"),
-           br(),
-           p("# rate of change for mosquitos"),
-           p("dS <- mui*M-muo*S-lam*S"),
-           p("dZ <- -muo*Z+lam*S"),
-           #p("dD <- muo*S+muo*Z"),
-           br(),
-           p("# rate of change for humans"),
-           p("dSh <- -lam_h*Sh+(1/durinf)*X"),
-           p("dX <- lam_h*Sh-(1/durinf)*X")
+    column(2,h3("Download csv"),
+#            p("m <- M/H #ratio of mosquitos to humans"),
+#            p("z <- Z/M #ratio of infectious mosquitos"),
+#            p("x <- X/H #ratio of infectious humans"),
+#            p("lam <- a*c*x #FOI for mosquitos"),
+#            p("lam_h <- m*a*b*z #FOI for humans"),
+#            br(),
+#            p("# rate of change for mosquitos"),
+#            p("dS <- mui*M-muo*S-lam*S"),
+#            p("dZ <- -muo*Z+lam*S"),
+#            #p("dD <- muo*S+muo*Z"),
+#            br(),
+#            p("# rate of change for humans"),
+#            p("dSh <- -lam_h*Sh+(1/durinf)*X"),
+#            p("dX <- lam_h*Sh-(1/durinf)*X")
            #p("dRh <- (1/durinf)*X-(1/immunity)*Rh")
-           , downloadButton('downloadODE','Download (works only in browser)')
+           downloadButton('downloadODE','Download (works only in browser)')
            #,textOutput(outputId = "lam")
     )
-  )
+  ),
+fluidRow(h2("IBM"),
+         column(5,h3("Human population")
+                #,plotOutput(outputId="human_pop")
+         ),
+         column(5,
+                h3("Mosquito Population")
+                #,plotOutput(outputId = "everything_mosq")
+         ),
+         column(2,h3("Download csv")
+                #,downloadButton('downloadODE','Download (works only in browser)')
+                ))
   
   
 )
