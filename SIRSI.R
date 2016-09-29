@@ -1,0 +1,63 @@
+#SIRSI
+!Inits
+S=300, I_S=20, R_T=0, R_N=0, S_I=0, I_UA=0, I_DA=0, S_M=500, I_M=200
+
+
+!Equations
+N <- S + I_S + R_T + R_N + S_I + I_UA + I_DA
+M <- S_M + I_M
+m <- M/N #ratio of mosquito to human
+x <- (I_S + I_UA + I_DA)/N #ratio of infected humans
+z <- I_M/M #ratio of infected mosquitos
+lam_M <- a*c*x
+lam_H <- m*a*b*z
+
+lambda_M <<- c(lambda_M,lam_M)
+lambda_H <<- c(lambda_H,lam_H)
+
+dS <- N*mu_i + S_I*omega_0 - S*mu_S - S*lam_H
+dI_S <- S*lam_H + S_I*lam_H*lam_IS - I_S*mu_S*mu_IS - I_S*gamma_T - I_S*gamma_N
+dR_T <- I_S*gamma_T - R_T*mu_S*mu_RT - R_T*omega
+dR_N <- I_S*gamma_N - R_N*mu_S*mu_RN - R_N*omega
+dS_I <- R_T*omega + R_N*omega - S_I*mu_S*mu_SI - S_I*omega_0 - S_I*lam_H*lam_IS - S_I*lam_H*lam_UA - S_I*lam_H*lam_DA
+dI_UA <- S_I*lam_H*lam_UA - I_UA*mu_S*mu_IUA 
+dI_DA <- S_I*lam_H*lam_DA -I_DA*mu_S*mu_IDA
+
+dS_M <- M*beta - S_M*kappa_SM - S_M*lam_M
+dI_M <- S_M*lam_M - I_M*kappa_IM
+
+!Parameters
+mu_i = 1/(55*364), #birth rate of human
+mu_S = 1/(55*364), #normal death rate of human
+omega_0 = 1/(5*364), #total loss of immunity (5 years), #then the model will need to run over 5 years
+mu_IS = 3, #increased death rate due to untreated malaria, 3 times higher chance
+gamma_T = 1/(10), #recovery with treatment
+gamma_N = 1/(30), #natural recovery
+mu_RT = 1.0001, #increased death rate from treatment, 1.0001 times
+mu_RN = 1.0005, #increased death rate from treatment, 1.0005 times
+omega = 1/(6*30), #partial loss of immunity
+mu_SI = 1, #same death rate as mu_S
+lam_IS = .60, #FOI to become truely sympatomatic infection is reduced by 40%
+lam_UA = 1.15, #FOI to become Undectable Asymptomatic infection is increased by 15$ 
+lam_DA = 1.25, #FOI to become Dectable Asymptomatic infection is increased by 25$
+mu_IUA = 1, #same death rate as mu_S
+mu_IDA = 1, #same death rate as mu_S
+
+beta = 1/10, #birth rate of mosquitos
+kappa_SM = 1/10, #death rate of mosquitos
+kappa_IM = 1/9, #death rate of infected mosquitos
+
+a = 3, #human feeding rate
+b = .1, #probability of disease transmission per bite for humans
+c = .3 #probability a mosquito becomes infected after biting an infected human
+
+
+!Outputs
+dS, dI_S, dR_T, dR_N, dS_I, dI_UA, dI_DA, dS_M, dI_M
+
+!ExtraFunctions
+lambda_H <- NA
+lambda_M <- NA
+
+
+!MAEMOD_End

@@ -245,14 +245,3 @@ server <- function(input, output) {
 }
 
 shinyApp(ui = ui, server = server)
-
-#output$inc2 <- renderPlot({
-#  parameters <- parameters_r()
-#  out <- ode_out()
-#  #pop <- out[,2]+out[,3]
-
-#  #inc <- parameters[3]*parameters[4]*(out[,7]/out[,5])*out[,3]*out[,2]/pop
-#  inc2 <- parameters[3]*parameters[4]*(out[,7]/(out[,6]+out[,7]))*out[,3]
-#  #plot(inc2, type="l")
-#  plot(out[,3])
-#})
