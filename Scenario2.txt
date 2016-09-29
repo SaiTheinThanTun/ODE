@@ -1,13 +1,13 @@
 #SIRSI
 !Inits
-S=300, I_S=20, R_T=0, R_N=0, S_I=0, I_UA=0, I_DA=0, S_M=500, I_M=200
+S=300, I_S=20, R_T=0, R_N=0, S_I=0, I_UA=0, I_DA=0, S_M=80, I_M=20
 
 
 !Equations
 N <- S + I_S + R_T + R_N + S_I + I_UA + I_DA
 M <- S_M + I_M
 m <- M/N #ratio of mosquito to human
-x <- (I_S + I_UA + I_DA)/N #ratio of infected humans
+x <- (I_S + (I_UA*.1) + (I_DA*.2))/N #ratio of infected humans, asymptomatic people have the infective power of a fraction of the symptomatic patients
 z <- I_M/M #ratio of infected mosquitos
 lam_M <- a*c*x
 lam_H <- m*a*b*z
@@ -29,7 +29,7 @@ dI_M <- S_M*lam_M - I_M*kappa_IM
 !Parameters
 mu_i = 1/(55*364), #birth rate of human
 mu_S = 1/(55*364), #normal death rate of human
-omega_0 = 1/(5*364), #total loss of immunity (5 years), #then the model will need to run over 5 years
+omega_0 = 1/(1*364), #total loss of immunity (1 year), #if it's 5 year, then the model will need to run over 5 years
 mu_IS = 3, #increased death rate due to untreated malaria, 3 times higher chance
 gamma_T = 1/(10), #recovery with treatment
 gamma_N = 1/(30), #natural recovery
@@ -37,19 +37,19 @@ mu_RT = 1.0001, #increased death rate from treatment, 1.0001 times
 mu_RN = 1.0005, #increased death rate from treatment, 1.0005 times
 omega = 1/(6*30), #partial loss of immunity
 mu_SI = 1, #same death rate as mu_S
-lam_IS = .60, #FOI to become truely sympatomatic infection is reduced by 40%
-lam_UA = 1.15, #FOI to become Undectable Asymptomatic infection is increased by 15$ 
-lam_DA = 1.25, #FOI to become Dectable Asymptomatic infection is increased by 25$
+lam_IS = .20, #FOI to become truely sympatomatic infection is reduced by 80%
+lam_UA = 0.15, #FOI to become Undectable Asymptomatic infection is decreased by 85% 
+lam_DA = 0.25, #FOI to become Dectable Asymptomatic infection is decreased by 75%
 mu_IUA = 1, #same death rate as mu_S
 mu_IDA = 1, #same death rate as mu_S
 
 beta = 1/10, #birth rate of mosquitos
 kappa_SM = 1/10, #death rate of mosquitos
-kappa_IM = 1/9, #death rate of infected mosquitos
+kappa_IM = 1/10, #death rate of infected mosquitos
 
 a = 3, #human feeding rate
 b = .1, #probability of disease transmission per bite for humans
-c = .3 #probability a mosquito becomes infected after biting an infected human
+c = .05 #probability a mosquito becomes infected after biting an infected human
 
 
 !Outputs
