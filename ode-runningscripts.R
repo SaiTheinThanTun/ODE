@@ -1,4 +1,7 @@
-out <- maemodrun("SIRSI - Copy.txt", timegrid = seq(0,2000,1))
+library(deSolve)
+library(maemod)
+
+out <- maemodrun("SIRSI - Copy.txt", timegrid = seq(0,2000,1)) #scenario2
 #out <- maemodrun("SIRSI - Copy.txt", timegrid = seq(0,10000,1)) #scenario1
 #out <- maemodrun("Scenario1.txt", timegrid = seq(0,10000,1))
 head(out)
@@ -23,7 +26,7 @@ lines(lambda_M, col="red")
 # out1 <- maemodrun("ex1.txt", timegrid = seq(0,1000,1))
 # out2 <- maemodrun("ex2.txt", timegrid = seq(0,1000,1))
 # 
-# out3 <- maemodrun("ex3.txt", timegrid = seq(0,1000,1))
+#out3 <- maemodrun("ex3.txt", timegrid = seq(0,800,1))
 for(i in 2:10){
   print(min(out[,i])  )
 }
