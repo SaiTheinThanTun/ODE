@@ -1,15 +1,15 @@
 library(deSolve)
 library(maemod)
 
-out <- maemodrun("SIRSI - Copy.txt", timegrid = seq(0,2000,1)) #scenario2
+out <- maemodrun("D:\\Dropbox\\IBM project_Sai\\ODE\\SIRSI.txt", timegrid = seq(0,10000,1)) #scenario2
 #out <- maemodrun("SIRSI - Copy.txt", timegrid = seq(0,10000,1)) #scenario1
 #out <- maemodrun("Scenario1.txt", timegrid = seq(0,10000,1))
 head(out)
 tail(out)
 
 #humans
-plot(out[,2], type='l', ylim=c(0,max(c(out[,2],out[,3]))), col="blue", main="Humans")
-lines(out[,3], col="red")
+plot(out[,2], type='l', ylim=c(0,max(c(out[,2],out[,4]))), col="blue", main="Humans")
+lines(out[,4], col="red")
 lines(out[,7]+out[,8], col="purple")
 
 #Mosquitos
