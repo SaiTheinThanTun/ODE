@@ -20,6 +20,10 @@ lines(out[,10], col="red")
 plot(lambda_H, type='l', ylim=c(0,max(c(lambda_H,lambda_M))), col="blue", main="lambda")
 lines(lambda_M, col="red")
 
+#incidence
+plot(inc, type='l', col="blue", main="Incidence")
+
+
 #lambda_H
 # (700/320)*3*.3*(200/700)
 # 

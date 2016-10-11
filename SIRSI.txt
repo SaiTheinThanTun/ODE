@@ -15,6 +15,9 @@ lam_H <- m*a*b*z
 lambda_M <<- c(lambda_M,lam_M)
 lambda_H <<- c(lambda_H,lam_H)
 
+inc_i <- f*E + S_I*lam_H*lam_SI + lam_H*lam_IDA*I_DA + lam_H*lam_IUA*I_UA # lam_H*S
+inc <<- c(inc, inc_i)
+
 dS <- N*mu_i + S_I*omega_0 - S*mu_S - S*lam_H
 dE <- lam_H*S - mu_S*mu_E*E - f*E
 dI_S <- f*E + S_I*lam_H*lam_SI - I_S*mu_S*mu_IS - I_S*gamma_T - I_S*gamma_N + lam_H*lam_IDA*I_DA + lam_H*lam_IUA*I_UA
@@ -32,12 +35,12 @@ mu_S = 1/(55*364), #normal death rate of human
 omega_0 = 1/(5*364), #total loss of immunity (5 years), #then the model will need to run over 5 years
 mu_E = 1, #same death rate as susceptibles
 f = 1/10, #duration of E is approximately 10 days, Collins
-mu_IS = 3, #increased death rate due to untreated malaria, 3 times higher chance
-gamma_T = 1/(10), #recovery with treatment
-gamma_N = 1/(20), #natural recovery, approximately from Collins
-mu_RT = 1.0001, #increased death rate from treatment, 1.0001 times
-sigma = 1/(6*30), #loss of prophylactic effect of drugs/treatment
-mu_SI = 1, #same death rate as mu_S
+mu_IS = 3, # increased death rate due to untreated malaria, 3 times higher chance
+gamma_T = 1/(10), # recovery with treatment
+gamma_N = 1/(20), # natural recovery, approximately from Collins
+mu_RT = 1.0001, # increased death rate from treatment, 1.0001 times
+sigma = 1/(6*30), # loss of prophylactic effect of drugs/treatment
+mu_SI = 1, # same death rate as mu_S
 lam_SI = .60, #FOI to become truely sympatomatic infection is reduced by 40%
 lam_IUA = .85, #FOI of Undectable Asymptomatic infection becoming symptomatic again is decreased by 15% 
 lam_IDA = .75, #FOI of Dectable Asymptomatic infection becoming symptomatic again is decreased by 25%
@@ -50,7 +53,7 @@ epsilon_IUA = .3, # reinfectivity of I_UA is reduced by 70%
 
 beta = 1/10, #birth rate of mosquitos
 kappa_SM = 1/10, #death rate of mosquitos
-kappa_IM = 1/9, #death rate of infected mosquitos
+kappa_IM = 1/8, #death rate of infected mosquitos
 
 a = 3, #human feeding rate
 b = .01, #probability of disease transmission per bite for humans
@@ -63,6 +66,7 @@ dS, dE, dI_S, dR_T, dS_I, dI_UA, dI_DA, dS_M, dI_M
 !ExtraFunctions
 lambda_H <- c()
 lambda_M <- c()
+inc <- c()
 
 
 !MAEMOD_End
