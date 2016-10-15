@@ -47,8 +47,11 @@ lam_H <- m*a*b*z
 lambda_M <<- c(lambda_M,lam_M)
 lambda_H <<- c(lambda_H,lam_H)
 
-inc_i <- f*E + S_I*lam_H*xi1 + lam_H*xi1*I_DA + lam_H*xi1*I_UA # lam_H*S
+inc_i <- rep*gamma*I_S
 inc <<- c(inc, inc_i)
+
+prev_i <- (R_T+I_DA)/N
+prev <<- c(prev,prev_i)
 
 dS <- N*mu_i + S_I*omega_0 - S*mu_S - S*lam_H
 dE <- lam_H*S - mu_S*mu_E*E - f*E
@@ -69,6 +72,7 @@ dS, dE, dI_S, dR_T, dS_I, dI_UA, dI_DA, dS_M, dI_M
 lambda_H <- c()
 lambda_M <- c()
 inc <- c()
+prev <- c()
 
 
 !MAEMOD_End

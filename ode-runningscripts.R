@@ -23,6 +23,11 @@ lines(lambda_M, col="red")
 #incidence
 plot(inc, type='l', col="blue", main="Incidence")
 
+#prevalence (R_T+I_DA)/N
+plot(prev, type='l', col='blue', main="Prevalence (R_T+I_DA)/N")
+
+#incidence vs prevalence
+plot(inc,prev, main="incidence vs prevalence")
 
 #lambda_H
 # (700/320)*3*.3*(200/700)
