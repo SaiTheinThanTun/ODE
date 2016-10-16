@@ -88,16 +88,18 @@ prev <- c()
 !MAEMOD_End
 ")),
 column(4, plotOutput(outputId = "monthly_inc")), #monthly incidence
-#column(4, plotOutput(outputId = "incidence")), #incidence by timesteps
-column(4, plotOutput(outputId = "prevalence"))),
+#column(4, plotOutput(outputId = "incidence")), #incidence by timesteps 
+column(4, plotOutput(outputId = "N_inc_daily"))),
 fluidRow(column(4,""),
          column(4, plotOutput(outputId = "incVsprev")),
-         column(4, plotOutput(outputId = "N_inc_daily"))),
+         column(4, plotOutput(outputId = "N_inc_monthly"))),
 fluidRow(column(4,
-                numericInput(inputId = "maxtime", label= "Max time (days)", value=1000),
+                numericInput(inputId = "maxtime", label= "Max time (days)", value=1080),
                 numericInput(inputId = "rep", label = "Report/Rx rate", value = .70),
                 numericInput(inputId = "gamma", label = "Recovery rate", value = 1/(20))
-                ))
+                )),
+fluidRow(h3("backup graphs"),
+         column(4, plotOutput(outputId = "prevalence")))
 
 )
 
@@ -130,7 +132,10 @@ server <- function(input, output) {
     
     inc_mnth <- unname(tapply(inc, (seq_along(inc)-1) %/% period, sum))
     
-    plot(inc_mnth, type='l', main="Incidence per month (not per 1000)")
+    inc_mnth_n <- unname(tapply(N_inc_R(), (seq_along(N_inc_R())-1) %/% 30, sum))
+    
+    plot(inc_mnth, type='l', main="Incidence per month (not per 1000)", col="blue")
+    lines(inc_mnth_n, col="red")
   })
   output$prevalence <- renderPlot({
     #prevalence (R_T+I_DA)/N #calculated from inside
@@ -148,6 +153,14 @@ server <- function(input, output) {
     #daily incidence
     plot(N_inc_R(), type = 'l', main = "daily incidence")
   })
+
+  output$N_inc_monthly <- renderPlot({
+    inc_mnth <- unname(tapply(N_inc_R(), (seq_along(N_inc_R())-1) %/% 30, sum))
+    #monthly incidence
+    plot(inc_mnth, type = 'l', main = "monthly incidence")
+  })
+  
+  
 
 }
 
