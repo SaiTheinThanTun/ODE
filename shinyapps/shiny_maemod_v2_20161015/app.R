@@ -91,8 +91,14 @@ column(4, plotOutput(outputId = "monthly_inc")), #monthly incidence
 #column(4, plotOutput(outputId = "incidence")), #incidence by timesteps
 column(4, plotOutput(outputId = "prevalence"))),
 fluidRow(column(4,""),
-         column(4, plotOutput(outputId = "incVsprev"))),
-numericInput(inputId = "maxtime", label= "Max time (days)", value=1000)
+         column(4, plotOutput(outputId = "incVsprev")),
+         column(4, plotOutput(outputId = "N_inc_daily"))),
+fluidRow(column(4,
+                numericInput(inputId = "maxtime", label= "Max time (days)", value=1000),
+                numericInput(inputId = "rep", label = "Report/Rx rate", value = .70),
+                numericInput(inputId = "gamma", label = "Recovery rate", value = 1/(20))
+                ))
+
 )
 
 server <- function(input, output) {
@@ -115,11 +121,11 @@ server <- function(input, output) {
     lines(lambda_M, col="red")
   })
   output$incidence <- renderPlot({
-    #incidence
+    #incidence #calculated from inside
     plot(inc, type='l', col="blue", main="Incidence")
   })
   output$monthly_inc <- renderPlot({
-    #monthly incidence
+    #monthly incidence #calculated from inside
     period <- length(inc)/(input$maxtime/30)
     
     inc_mnth <- unname(tapply(inc, (seq_along(inc)-1) %/% period, sum))
@@ -127,13 +133,21 @@ server <- function(input, output) {
     plot(inc_mnth, type='l', main="Incidence per month (not per 1000)")
   })
   output$prevalence <- renderPlot({
-    #prevalence (R_T+I_DA)/N
+    #prevalence (R_T+I_DA)/N #calculated from inside
     plot(prev, type='l', col='blue', main="Prevalence (R_T+I_DA)/N")
   })
   output$incVsprev <- renderPlot({
-    #incidence vs prevalence
+    #incidence vs prevalence #calculated from inside
     plot(inc,prev, main="incidence vs prevalence")
-  }) 
+  })
+  
+  #incidence calculated the normal way
+  N_inc_R <- reactive(out()[,4]*input$rep*input$gamma) 
+  
+  output$N_inc_daily <- renderPlot({
+    #daily incidence
+    plot(N_inc_R(), type = 'l', main = "daily incidence")
+  })
 
 }
 
