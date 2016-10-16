@@ -1,7 +1,9 @@
 library(deSolve)
 library(maemod)
 
-out <- maemodrun("D:\\Dropbox\\IBM project_Sai\\ODE\\SIRSI.txt", timegrid = seq(0,10000,1)) #scenario2
+maxtime <- 10000
+
+out <- maemodrun("D:\\Dropbox\\IBM project_Sai\\ODE\\SIRSI.txt", timegrid = seq(0,maxtime,1)) #scenario2
 #out <- maemodrun("SIRSI - Copy.txt", timegrid = seq(0,10000,1)) #scenario1
 #out <- maemodrun("Scenario1.txt", timegrid = seq(0,10000,1))
 head(out)
@@ -22,6 +24,14 @@ lines(lambda_M, col="red")
 
 #incidence
 plot(inc, type='l', col="blue", main="Incidence")
+
+#monthly incidence
+period <- length(inc)/(maxtime/30)
+
+inc_mnth <- unname(tapply(inc, (seq_along(inc)-1) %/% period, sum))
+
+plot(inc_mnth, type='l')
+
 
 #prevalence (R_T+I_DA)/N
 plot(prev, type='l', col='blue', main="Prevalence (R_T+I_DA)/N")
