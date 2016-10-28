@@ -1,5 +1,6 @@
-
+library(deSolve)
 library(shiny)
+library(maemod)
 ui <- fluidPage(
   fluidRow(column(4, plotOutput(outputId = "humans")),
            column(4, plotOutput(outputId = "mosquitos")),
@@ -134,8 +135,8 @@ server <- function(input, output) {
     
     inc_mnth_n <- unname(tapply(N_inc_R(), (seq_along(N_inc_R())-1) %/% 30, sum))
     
-    plot(inc_mnth, type='l', main="Incidence per month (not per 1000)", col="blue")
-    lines(inc_mnth_n, col="red")
+    plot(inc_mnth, type='p', main="Incidence per month (not per 1000), blue=from inside, red=from outside", col="blue")
+    lines(inc_mnth_n,type='p', col="red")
   })
   output$prevalence <- renderPlot({
     #prevalence (R_T+I_DA)/N #calculated from inside
