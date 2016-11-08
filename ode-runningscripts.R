@@ -22,6 +22,10 @@ lines(out[,10], col="red")
 plot(lambda_H, type='l', ylim=c(0,max(c(lambda_H,lambda_M))), col="blue", main="lambda")
 lines(lambda_M, col="red")
 
+####################
+####inside 1########
+####################
+
 #incidence #calculated from inside
 plot(inc, type='l', col="blue", main="Incidence")
 
@@ -39,6 +43,9 @@ plot(prev, type='l', col='blue', main="Prevalence (R_T+I_DA)/N")
 #incidence vs prevalence #calculated from inside
 plot(inc,prev, main="incidence vs prevalence")
 
+####################
+####outside1########
+####################
 
 #incidence calculated the normal way
 #daily incidence
@@ -53,7 +60,15 @@ N_inc_mnth <- unname(tapply(N_inc, (seq_along(N_inc)-1) %/% 30, sum))
 #monthly incidence
 plot(N_inc_mnth, type = 'l', main = "monthly incidence")
 
+####################
+####inside 2########
+####################
 
+#inside 2 is calcualted from ci, which is a state variable
+ci <- out[,11] #cumulative incidence (per day)
+inc2 <- ci[-1] - ci[-length(ci)] #incidence calc from inside 2 (daily)
+#plot(inc2)
+inc2_mnth <- unname(tapply(inc2, (seq_along(inc2)-1) %/% 30, sum)) #incidence calc from inside 2 (monthly)
 
 #lambda_H
 # (700/320)*3*.3*(200/700)

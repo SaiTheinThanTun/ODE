@@ -11,7 +11,7 @@ ui <- fluidPage(
 "
 #SIRSI
 !Inits
-S=300, E=0, I_S=1, R_T=0, S_I=0, I_UA=0, I_DA=0, S_M=500, I_M=200
+S=300, E=0, I_S=1, R_T=0, S_I=0, I_UA=0, I_DA=0, S_M=500, I_M=200, ci=0
 
 !Parameters
 mu_i = 1/(55*364), #birth rate of human
@@ -58,8 +58,10 @@ lam_H <- m*a*b*z
 lambda_M <<- c(lambda_M,lam_M)
 lambda_H <<- c(lambda_H,lam_H)
 
-inc_i <- rep*gamma*I_S
-inc <<- c(inc, inc_i)
+inc_i <- rep*gamma*I_S #incidence per timestep
+inc <<- c(inc, inc_i) #incidence value written to outside vector 
+
+ci <- rep*gamma*I_S #incidence calculated to the state variable
 
 prev_i <- (R_T+I_DA)/N
 prev <<- c(prev,prev_i)
@@ -77,7 +79,7 @@ dI_M <- S_M*lam_M - I_M*kappa_IM
 
 
 !Outputs
-dS, dE, dI_S, dR_T, dS_I, dI_UA, dI_DA, dS_M, dI_M
+dS, dE, dI_S, dR_T, dS_I, dI_UA, dI_DA, dS_M, dI_M, ci
 
 !ExtraFunctions
 lambda_H <- c()
@@ -123,10 +125,18 @@ server <- function(input, output) {
     plot(lambda_H, type='l', ylim=c(0,max(c(lambda_H,lambda_M))), col="blue", main="lambda")
     lines(lambda_M, col="red")
   })
-  output$incidence <- renderPlot({
-    #incidence #calculated from inside
-    plot(inc, type='l', col="blue", main="Incidence")
-  })
+  # output$incidence <- renderPlot({
+  #   #incidence #calculated from inside
+  #   plot(inc, type='l', col="blue", main="Incidence, inside1")
+  # })
+  ####################
+  ####inside 2########
+  ####################
+  
+  #inside 2 is calcualted from ci, which is a state variable
+  ci <- reactive(out()[,11]) #cumulative incidence (per day)
+  inc2 <- reactive({ci()[-1] - ci()[-length(ci())] })#incidence calc from inside 2 (daily)
+  
   output$monthly_inc <- renderPlot({
     #monthly incidence #calculated from inside
     period <- length(inc)/(input$maxtime/30)
@@ -135,8 +145,12 @@ server <- function(input, output) {
     
     inc_mnth_n <- unname(tapply(N_inc_R(), (seq_along(N_inc_R())-1) %/% 30, sum))
     
-    plot(inc_mnth, type='p', main="Incidence per month (not per 1000), blue=from inside, red=from outside", col="blue")
+    inc2_mnth <- unname(tapply(inc2(), (seq_along(inc2())-1) %/% 30, sum)) #incidence calc from inside 2 (monthly)
+    
+    
+    plot(inc_mnth, type='p', main="Incidence per month (not per 1000), \nblue=inside1, red=outside, \n green=inside2", col="blue")
     lines(inc_mnth_n,type='p', col="red")
+    lines(inc2_mnth, type='l', col="green")
   })
   output$prevalence <- renderPlot({
     #prevalence (R_T+I_DA)/N #calculated from inside
@@ -152,13 +166,13 @@ server <- function(input, output) {
   
   output$N_inc_daily <- renderPlot({
     #daily incidence
-    plot(N_inc_R(), type = 'l', main = "daily incidence")
+    plot(N_inc_R(), type = 'l', main = "daily incidence, outside")
   })
 
   output$N_inc_monthly <- renderPlot({
     inc_mnth <- unname(tapply(N_inc_R(), (seq_along(N_inc_R())-1) %/% 30, sum))
     #monthly incidence
-    plot(inc_mnth, type = 'l', main = "monthly incidence")
+    plot(inc_mnth, type = 'l', main = "monthly incidence, outside")
   })
   
   

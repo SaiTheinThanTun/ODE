@@ -1,6 +1,6 @@
 #SIRSI
 !Inits
-S=300, E=0, I_S=1, R_T=0, S_I=0, I_UA=0, I_DA=0, S_M=500, I_M=200
+S=300, E=0, I_S=1, R_T=0, S_I=0, I_UA=0, I_DA=0, S_M=500, I_M=200, ci=0
 
 !Parameters
 mu_i = 1/(55*364), #birth rate of human
@@ -47,8 +47,10 @@ lam_H <- m*a*b*z
 lambda_M <<- c(lambda_M,lam_M)
 lambda_H <<- c(lambda_H,lam_H)
 
-inc_i <- rep*gamma*I_S
-inc <<- c(inc, inc_i)
+inc_i <- rep*gamma*I_S #incidence per timestep
+inc <<- c(inc, inc_i) #incidence value written to outside vector 
+
+ci <- rep*gamma*I_S #incidence calculated to the state variable
 
 prev_i <- (R_T+I_DA)/N
 prev <<- c(prev,prev_i)
@@ -66,7 +68,7 @@ dI_M <- S_M*lam_M - I_M*kappa_IM
 
 
 !Outputs
-dS, dE, dI_S, dR_T, dS_I, dI_UA, dI_DA, dS_M, dI_M
+dS, dE, dI_S, dR_T, dS_I, dI_UA, dI_DA, dS_M, dI_M, ci
 
 !ExtraFunctions
 lambda_H <- c()
