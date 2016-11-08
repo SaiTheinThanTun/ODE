@@ -11,7 +11,7 @@ ui <- fluidPage(
 "
 #SIRSI
 !Inits
-S=300, E=0, I_S=1, R_T=0, S_I=0, I_UA=0, I_DA=0, S_M=500, I_M=200, ci=0
+S=1000, E=0, I_S=1, R_T=0, S_I=0, I_UA=0, I_DA=0, S_M=500, I_M=200, ci=0
 
 !Parameters
 mu_i = 1/(55*364), #birth rate of human
@@ -90,7 +90,11 @@ prev <- c()
 
 !MAEMOD_End
 ")),
-column(4, plotOutput(outputId = "monthly_inc")), #monthly incidence
+###################
+####comparison#####
+###################
+#column(4, plotOutput(outputId = "monthly_inc_compare")), #monthly incidence comparison
+column(4, plotOutput(outputId = "monthly_inc")),
 #column(4, plotOutput(outputId = "incidence")), #incidence by timesteps 
 column(4, plotOutput(outputId = "N_inc_daily"))),
 fluidRow(column(4,""),
@@ -137,20 +141,30 @@ server <- function(input, output) {
   ci <- reactive(out()[,11]) #cumulative incidence (per day)
   inc2 <- reactive({ci()[-1] - ci()[-length(ci())] })#incidence calc from inside 2 (daily)
   
+  ###################
+  ####comparison#####
+  ###################
+  # output$monthly_inc_compare <- renderPlot({
+  #   #monthly incidence #calculated from inside
+  #   period <- length(inc)/(input$maxtime/30)
+  #   
+  #   inc_mnth <- unname(tapply(inc, (seq_along(inc)-1) %/% period, sum))
+  #   
+  #   inc_mnth_n <- unname(tapply(N_inc_R(), (seq_along(N_inc_R())-1) %/% 30, sum))
+  #   
+  #   inc2_mnth <- unname(tapply(inc2(), (seq_along(inc2())-1) %/% 30, sum)) #incidence calc from inside 2 (monthly)
+  #   
+  #   
+  #   plot(inc_mnth, type='p', main="Incidence per month (not per 1000), \nblue=inside1, red=outside, \n green=inside2", col="blue")
+  #   lines(inc_mnth_n,type='p', col="red")
+  #   lines(inc2_mnth, type='l', col="green")
+  # })
+  
   output$monthly_inc <- renderPlot({
-    #monthly incidence #calculated from inside
-    period <- length(inc)/(input$maxtime/30)
-    
-    inc_mnth <- unname(tapply(inc, (seq_along(inc)-1) %/% period, sum))
-    
-    inc_mnth_n <- unname(tapply(N_inc_R(), (seq_along(N_inc_R())-1) %/% 30, sum))
-    
+
     inc2_mnth <- unname(tapply(inc2(), (seq_along(inc2())-1) %/% 30, sum)) #incidence calc from inside 2 (monthly)
     
-    
-    plot(inc_mnth, type='p', main="Incidence per month (not per 1000), \nblue=inside1, red=outside, \n green=inside2", col="blue")
-    lines(inc_mnth_n,type='p', col="red")
-    lines(inc2_mnth, type='l', col="green")
+    plot(inc2_mnth, type='l', main="Incidence per month per 1000", col="blue")
   })
   output$prevalence <- renderPlot({
     #prevalence (R_T+I_DA)/N #calculated from inside

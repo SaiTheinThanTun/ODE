@@ -1,6 +1,6 @@
 #SIRSI
 !Inits
-S=300, E=0, I_S=1, R_T=0, S_I=0, I_UA=0, I_DA=0, S_M=500, I_M=200, ci=0
+S=1000, E=0, I_S=1, R_T=0, S_I=0, I_UA=0, I_DA=0, S_M=500, I_M=200, ci=0
 
 !Parameters
 mu_i = 1/(55*364), #birth rate of human
