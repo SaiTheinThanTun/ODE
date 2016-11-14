@@ -28,11 +28,11 @@ mu_IDA = 1, #same death rate as mu_S
 
 beta = 1/10, #birth rate of mosquitos
 kappa_SM = 1/10, #death rate of mosquitos
-kappa_IM = 1/8, #death rate of infected mosquitos
+kappa_IM = 1/10, #in search of equilibrium :) 1/8, #death rate of infected mosquitos
 
 a = 3, #human feeding rate
-b = .01, #probability of disease transmission per bite for humans
-c = .03 #probability a mosquito becomes infected after biting an infected human
+b = .006, #.01, #probability of disease transmission per bite for humans
+c = .02 #.03 #probability a mosquito becomes infected after biting an infected human
 
 
 !Equations
@@ -42,7 +42,7 @@ m <- M/N #ratio of mosquito to human
 x <- (I_S + I_UA + I_DA)/N #ratio of infected humans
 z <- I_M/M #ratio of infected mosquitos
 lam_M <- a*c*x
-lam_H <- m*a*b*z
+lam_H <- m*a*b*z #FOI for humans
 
 lambda_M <<- c(lambda_M,lam_M)
 lambda_H <<- c(lambda_H,lam_H)
