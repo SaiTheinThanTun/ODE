@@ -32,8 +32,13 @@ kappa_IM = 1/10, #in search of equilibrium :) 1/8, #death rate of infected mosqu
 
 a = 3, #human feeding rate
 b = .006, #.01, #probability of disease transmission per bite for humans
-c = .02 #.03 #probability a mosquito becomes infected after biting an infected human
+c = .02, #.03 #probability a mosquito becomes infected after biting an infected human
 
+seas_switch <- 1, #logical switch for seasonality
+amp <- .2,
+phi <- 0,
+magnitude <- 1
+   
 
 !Equations
 N <- S + E + I_S + R_T + S_I + I_UA + I_DA
@@ -41,7 +46,10 @@ M <- S_M + I_M
 m <- M/N #ratio of mosquito to human
 x <- (I_S + I_UA + I_DA)/N #ratio of infected humans
 z <- I_M/M #ratio of infected mosquitos
-lam_M <- a*c*x
+ seas <- amp*cos(2*pi*(t-phi)/365)+magnitude
+seas <- (seas*seas_switch)+(1-seas_switch)
+
+lam_M <- a*c*x*seas
 lam_H <- m*a*b*z #FOI for humans
 
 lambda_M <<- c(lambda_M,lam_M)
