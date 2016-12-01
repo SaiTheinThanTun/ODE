@@ -88,7 +88,7 @@ a = 3, #human feeding rate
 b = .006, #.01, #probability of disease transmission per bite for humans
 c = .02, #.03 #probability a mosquito becomes infected after biting an infected human
 
-seas_switch <- 1, #logical switch for seasonality
+seas_switch <- 0, #logical switch for seasonality
 amp <- .2,
 phi <- 0,
 magnitude <- 1
